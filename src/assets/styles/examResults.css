@@ -1,0 +1,68 @@
+/* 📌 Container chính */
+.exam-results-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* 📌 Tiêu đề trang */
+.page-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 20px;
+}
+
+/* 📌 Hiển thị khi đang tải hoặc có lỗi */
+.loading,
+.error,
+.no-results {
+    font-size: 18px;
+    font-weight: bold;
+    color: #d9534f;
+    background: #ffe6e6;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+/* 📌 Bảng kết quả */
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.results-table th,
+.results-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+.results-table th {
+    background: #007bff;
+    color: white;
+    font-size: 16px;
+}
+
+.results-table tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+/* 📌 Hiệu ứng hover */
+.results-table tbody tr:hover {
+    background: #f1f1f1;
+    cursor: pointer;
+}
+
+/* 📌 Responsive */
+@media (max-width: 768px) {
+    .results-table {
+        font-size: 14px;
+    }
+}   
