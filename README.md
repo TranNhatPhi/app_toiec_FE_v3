@@ -1,46 +1,98 @@
-# Getting Started with Create React App
+# TOEIC Learning Platform with Admin Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![React](https://img.shields.io/badge/React-18-blue)
+![MUI](https://img.shields.io/badge/Material_UI-5-lightgreen)
+![Node.js](https://img.shields.io/badge/Node.js-18-green)
+![MongoDB](https://img.shields.io/badge/MongoDB-6-brightgreen)
 
-## Available Scripts
+## 🌟 Overview
 
-In the project directory, you can run:
+A complete TOEIC preparation solution featuring:
+- **Mobile/Web App** for learners
+- **Admin Dashboard** for content management
+- **RESTful API** backend service
 
-### `npm start`
+## ✨ Key Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Learner App
+- � Practice tests with real TOEIC format
+- 📚 Vocabulary builder with flashcards
+- 📈 Progress tracking and analytics
+- 🎯 Personalized study recommendations
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Admin Dashboard
+- 👥 **User Management** (CRUD operations)
+- 📝 **Content Management**:
+  - Test/question bank editor
+  - Vocabulary set management
+- 📊 **Analytics Dashboard**:
+  - User engagement metrics
+  - Test performance statistics
+- ⚙️ **System Configuration**:
+  - Role-based access control
+  - App content customization
 
-### `npm test`
+## 🛠 Technology Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Frontend
+| Component        | Technology              |
+| ---------------- | ----------------------- |
+| Admin UI         | React 18 + TypeScript   |
+| UI Framework     | Material-UI (MUI) 5     |
+| State Management | Redux Toolkit           |
+| Charts           | Chart.js + MUI X Charts |
+| HTTP Client      | Axios                   |
 
-### `npm run build`
+### Backend
+| Component      | Technology           |
+| -------------- | -------------------- |
+| Server         | Node.js 18 + Express |
+| Database       | MongoDB 6 + Mongoose |
+| Authentication | JWT + Bcrypt         |
+| Caching        | Redis                |
+| Storage        | AWS S3               |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🚀 Getting Started
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Prerequisites
+- Node.js 18+
+- MongoDB 6+
+- Redis (optional)
+- AWS account (for S3 storage)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Installation
 
-### `npm run eject`
+1. Clone the repository:
+```bash
+git clone https://github.com/TranNhatPhi/App_Toiec_BE_v4
+cd toeic-platform
+Install dependencies:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+bash
+Copy
+# For backend
+cd backend && npm install
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# For admin dashboard
+cd ../admin-dashboard && npm install
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+# For mobile app
+cd ../mobile-app && npm install
+Configure environment variables:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+bash
+Copy
+# Create .env files in each directory
+cp .env.example .env
+Start the development servers:
 
-## Learn More
+bash
+Copy
+# Backend
+cd backend && npm run dev
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Admin dashboard
+cd ../admin-dashboard && npm start
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Mobile app
+cd ../mobile-app && npm start

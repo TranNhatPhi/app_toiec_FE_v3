@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { getExamResultsByUserId } from "../services/examResultService";
-import { jwtDecode } from "jwt-decode"; // 🟢 Giải mã JWT để lấy userId
+import { jwtDecode } from "jwt-decode";
 import Header from "../layouts/Header";
 import Footer from "../layouts/Footer";
-import "../assets/styles/examResults.css"; // 🟢 Import CSS
+import "../assets/styles/examResults.css";
 
-// ✅ Hàm giải mã JWT để lấy `userId`
 const getUserIdFromToken = (): number | null => {
     const token = localStorage.getItem("token");
     if (!token) return null;
 
     try {
-        const decoded: any = jwtDecode(token); // 🟢 Giải mã token
-        return decoded.userId || null; // 🟢 Trích xuất `userId`
+        const decoded: any = jwtDecode(token);
+        return decoded.userId || null;
     } catch (error) {
         console.error("❌ Lỗi giải mã token:", error);
         return null;
@@ -27,12 +26,11 @@ const ExamResults: React.FC = () => {
     useEffect(() => {
         const fetchExamResults = async () => {
             try {
-                const userId = getUserIdFromToken(); // 🟢 Lấy userId từ token
+                const userId = getUserIdFromToken();
                 if (!userId) {
                     throw new Error("Người dùng chưa đăng nhập!");
                 }
 
-                // ✅ Gọi API lấy danh sách kết quả bài thi
                 const data = await getExamResultsByUserId(userId);
                 setResults(data);
             } catch (err: any) {
@@ -76,8 +74,8 @@ const ExamResults: React.FC = () => {
                             {results.map((result, index) => (
                                 <tr key={result.id}>
                                     <td>{index + 1}</td>
-                                    <td>{result.exam_title || "N/A"}</td>
-                                    <td>{result.total_score || 0}</td>
+                                    <td>{result.detail || "N/A"}</td>
+                                    <td>{result.score || 0}</td>
                                     <td>{result.correct_answers || 0}</td>
                                     <td>{result.wrong_answers || 0}</td>
                                     <td>{result.unanswered_questions || 0}</td>

@@ -105,3 +105,20 @@ export const getExamResultsByUserId = async (userId: number): Promise<ExamResult
         throw error;
     }
 };
+
+/**
+ * 📊 Lấy thống kê số lượt thi mỗi ngày trong tháng hiện tại
+ * @returns Mảng dữ liệu có dạng [{ date: '2025-03-30', count: 10 }]
+ */
+export const getDailyExamAttemptsInMonth = async () => {
+    const res = await fetch("http://localhost:5000/api/exam-results/stats/daily-attempts");
+    const json = await res.json();
+    return json.data; // Trả về mảng [{date, count}]
+};
+
+export const getAvgScoreLast7Days = async (): Promise<number> => {
+    const res = await fetch("http://localhost:5000/api/exam-results/stats/avg-score-last-7-days");
+    const data = await res.json();
+    return data.data || 0;
+};
+

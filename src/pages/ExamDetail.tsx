@@ -1,54 +1,72 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import useExamDetail from "../hooks/useExamDetail";
+import useExamDetail from "../hooks/useExamDetail"; // Custom hook that fetches exam details
 import { submitExamResult } from "../services/examResultService";
-import "../assets/styles/examDetail.css"; // Import CSS
+import "../assets/styles/examDetail.css";
 
 const ExamDetail: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
-    const { examDetail, loading, error } = useExamDetail(Number(examId));
+    const [expired, setExpired] = useState(false);  // Track if the exam is expired (initially set to false)
+    const { examDetail, loading, error } = useExamDetail(Number(examId), expired); // Fetch exam details with expired state
 
     const LOCAL_STORAGE_KEY_TIME = `exam_time_${examId}`;
     const LOCAL_STORAGE_KEY_ANSWERS = `exam_answers_${examId}`;
+    const LOCAL_STORAGE_KEY_START = `exam_start_${examId}`;
 
-    // ✅ Lấy thời gian làm bài từ `localStorage`
-    const [timeLeft, setTimeLeft] = useState<number | null>(() => {
-        return Number(localStorage.getItem(LOCAL_STORAGE_KEY_TIME)) || null;
-    });
-
-    // ✅ Lấy danh sách đáp án đã chọn từ `localStorage`
-    const [answers, setAnswers] = useState<{ [key: number]: string }>(() => {
-        const savedAnswers = localStorage.getItem(LOCAL_STORAGE_KEY_ANSWERS);
-        return savedAnswers ? JSON.parse(savedAnswers) : {};
-    });
-
-    const [isSubmitting, setIsSubmitting] = useState(false); // ✅ Trạng thái đang nộp bài
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [answers, setAnswers] = useState<{ [key: number]: string }>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useEffect(() => {
-        if (examDetail?.duration && timeLeft === null) {
-            const savedTime = Number(localStorage.getItem(LOCAL_STORAGE_KEY_TIME)) || examDetail.duration * 60;
-            setTimeLeft(savedTime);
+        // Lấy câu trả lời từ localStorage và cập nhật state
+        const savedAnswers = localStorage.getItem(LOCAL_STORAGE_KEY_ANSWERS);
+        if (savedAnswers) {
+            setAnswers(JSON.parse(savedAnswers));
+        }
+    }, []); // Chạy chỉ một lần khi component load lần đầu
+    useEffect(() => {
+        const isSubmitted = localStorage.getItem(`exam_submitted_${examId}`);
+        if (isSubmitted === "true") {
+
+            alert("✅ Bài thi đã được nộp hoặc hết thời gian. Bạn không thể làm lại bài này.");
+            window.location.href = "/exam-results";
+            localStorage.setItem(`exam_submitted_${examId}`, "false"); // ✅ Đánh dấu đã vào thi
+        }
+    }, [examId]);
+    // Track time left
+    useEffect(() => {
+        if (examDetail?.duration) {
+            const now = Date.now();
+            let startTime = Number(localStorage.getItem(LOCAL_STORAGE_KEY_START));
+
+            if (!startTime) {
+                startTime = now;
+                localStorage.setItem(LOCAL_STORAGE_KEY_START, String(startTime));
+            }
+
+            const timePassed = Math.floor((now - startTime) / 1000);
+            const remaining = examDetail.duration * 60 - timePassed;
+
+            setTimeLeft(remaining > 0 ? remaining : 0);
         }
     }, [examDetail]);
 
-    // ✅ Giảm thời gian mỗi giây và lưu vào `localStorage`
     useEffect(() => {
         if (timeLeft === null) return;
 
         if (timeLeft > 0) {
-            localStorage.setItem(LOCAL_STORAGE_KEY_TIME, String(timeLeft));
             const timer = setTimeout(() => {
-                setTimeLeft((prevTime) => (prevTime !== null ? prevTime - 1 : null));
+                setTimeLeft(prevTime => (prevTime !== null ? prevTime - 1 : null));
             }, 1000);
             return () => clearTimeout(timer);
-        } else if (timeLeft === 0) {
+        } else {
             alert("⏳ Hết thời gian! Bài thi sẽ được tự động nộp.");
-            handleSubmitExam();
+            setExpired(true); // Set expired when time is up
+            handleSubmitExam(true); // Automatically submit when time expires
         }
     }, [timeLeft]);
 
-    // ✅ Hàm xử lý khi chọn đáp án (lưu vào state + localStorage)
     const handleSelectAnswer = (questionIndex: number, option: string) => {
         setAnswers((prevAnswers) => {
             const updatedAnswers = { ...prevAnswers, [questionIndex]: option };
@@ -57,7 +75,6 @@ const ExamDetail: React.FC = () => {
         });
     };
 
-    // ✅ Định dạng thời gian
     const formatTime = (seconds: number | null) => {
         if (seconds === null) return "Đang tải...";
         const minutes = Math.floor(seconds / 60);
@@ -65,13 +82,12 @@ const ExamDetail: React.FC = () => {
         return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
     };
 
-    // ✅ Hàm cuộn đến câu hỏi được chọn
     const scrollToQuestion = (index: number) => {
         questionRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "center" });
     };
 
-    // ✅ Hàm nộp bài thi
-    const handleSubmitExam = async () => {
+
+    const handleSubmitExam = async (expired = false) => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
@@ -87,14 +103,20 @@ const ExamDetail: React.FC = () => {
             return;
         }
 
-        // ✅ Công thức đúng để tính thời gian hoàn thành
-        const completedTime = examDetail.duration - Math.floor((timeLeft || 0) / 60);
+        // Set expired to true when time is up or user submits
+        if (!expired) {
+            setExpired(true);
+        }
 
-        // ✅ Chuẩn bị dữ liệu gửi lên API
+        const startTime = Number(localStorage.getItem(LOCAL_STORAGE_KEY_START));
+        const now = Date.now();
+        const completedTime = Math.floor((now - startTime) / 60000);
+
         const userAnswers = Object.entries(answers).map(([questionId, selectedAnswer]) => ({
             question_id: Number(questionId),
             selected_answer: selectedAnswer,
         }));
+
 
         try {
             const result = await submitExamResult(Number(examId), userAnswers, completedTime);
@@ -107,21 +129,18 @@ const ExamDetail: React.FC = () => {
                 `🏆 Điểm tổng: ${result.total_score}\n` +
                 `⏳ Thời gian hoàn thành: ${completedTime} phút`
             );
-
-            // ✅ Reset thời gian về mặc định
-            const resetDuration = examDetail.duration * 60; // Chuyển phút -> giây
+            localStorage.setItem(`exam_submitted_${examId}`, "true"); // ✅ Đánh dấu đã nộp
+            const resetDuration = examDetail.duration * 60;
             setTimeLeft(resetDuration);
             localStorage.setItem(LOCAL_STORAGE_KEY_TIME, String(resetDuration));
 
-            // ✅ Xóa đáp án đã chọn
             setAnswers({});
             localStorage.removeItem(LOCAL_STORAGE_KEY_ANSWERS);
+            localStorage.removeItem(LOCAL_STORAGE_KEY_START);
 
-            // ✅ Reload trang hoặc chuyển hướng đến trang kết quả
             setTimeout(() => {
                 window.location.href = "/exam-results";
-            }, 500); // Đợi 0.5s trước khi chuyển trang
-
+            }, 500);
         } catch (error: unknown) {
             if (error instanceof Error) {
                 alert(`❌ Lỗi khi nộp bài: ${error.message}`);
@@ -133,8 +152,10 @@ const ExamDetail: React.FC = () => {
         }
     };
 
-
-
+    // Start Exam Button: Will trigger expired=true and fetch data
+    const handleStartExam = async () => {
+        setExpired(true); // Set expired to true when the user clicks on start exam
+    };
 
     if (loading) return <p>Loading exam...</p>;
     if (error) return <p style={{ color: "red" }}>{error}</p>;
@@ -142,7 +163,6 @@ const ExamDetail: React.FC = () => {
 
     return (
         <div className="exam-page">
-            {/* ✅ Sidebar chứa danh sách câu hỏi theo dạng lưới (grid) */}
             <aside className="sidebar">
                 <h3>Danh sách câu hỏi</h3>
                 {examDetail.parts.map((part, partIndex) => (
@@ -167,32 +187,27 @@ const ExamDetail: React.FC = () => {
                         </div>
                     </div>
                 ))}
-                {/* ✅ Nút Nộp bài (Di chuyển sang bên phải) */}
-                <button className="submit-button" onClick={handleSubmitExam} disabled={isSubmitting || timeLeft === 0}>
+                <button className="submit-button" onClick={() => handleSubmitExam(false)} disabled={isSubmitting || timeLeft === 0}>
                     {isSubmitting ? "Đang nộp..." : "📝 Nộp bài"}
                 </button>
+
             </aside>
 
-            {/* ✅ Nội dung chính */}
             <div className="exam-container">
                 <h2>{examDetail.title}</h2>
 
-                {/* ✅ Audio nghe bài thi */}
                 <div className="audio-player">
                     <strong>Nghe đoạn hội thoại:</strong>
                     <audio controls>
-                        <source src={`http://localhost:3000/listen/${examDetail.audio}`}
-                            type="audio/mpeg" />
+                        <source src={`http://localhost:3000/listen/${examDetail.audio}`} type="audio/mpeg" />
                         Trình duyệt của bạn không hỗ trợ phát audio.
                     </audio>
                 </div>
 
-                {/* ✅ Hiển thị thời gian làm bài */}
                 <div className="timer">
                     <strong>Thời gian còn lại:</strong> {formatTime(timeLeft)}
                 </div>
 
-                {/* ✅ Danh sách câu hỏi */}
                 {examDetail.parts.map((part) => (
                     <div key={part.part_id} className="exam-part">
                         <h3>Phần {part.part_number}</h3>
@@ -201,9 +216,7 @@ const ExamDetail: React.FC = () => {
                                 .slice(0, part.part_id - 1)
                                 .reduce((acc, p) => acc + p.questions.length, 0) + index;
 
-                            // ✅ Nếu `image_filename` tồn tại, sử dụng nó làm URL ảnh; nếu không thì để null
-                            const imageUrl = q.image_filename ? `${q.image_filename}` : null;
-                            // console.log('hình ảnh:', imageUrl);
+
                             return (
                                 <div
                                     key={questionIndex}
@@ -212,21 +225,26 @@ const ExamDetail: React.FC = () => {
                                         questionRefs.current[questionIndex] = el;
                                     }}
                                 >
-                                    {imageUrl && (
+                                    {q.image_filename && (
                                         <div className="question-image">
-                                            <img src={imageUrl} alt={`Question ${questionIndex + 1}`} />
+                                            <img
+                                                src={`http://localhost:3000/listen/part1/${q.image_filename}`}
+                                                alt={`Question ${questionIndex + 1}`}
+                                            />
                                         </div>
                                     )}
                                     <p>{questionIndex + 1}. {q.question_text}</p>
                                     <ul>
-                                        {["A", "B", "C", "D"].map((option) => (
-                                            <li key={option} onClick={() => handleSelectAnswer(questionIndex, option)}>
-                                                <label className="radio-container">
-                                                    <input type="radio" name={`q${questionIndex}`} value={option} checked={answers[questionIndex] === option} />
-                                                    <span>{option}. {q[`option${option}` as keyof typeof q]}</span>
-                                                </label>
-                                            </li>
-                                        ))}
+                                        {["A", "B", "C", "D"]
+                                            .filter(option => q[`option${option}` as keyof typeof q])
+                                            .map((option) => (
+                                                <li key={option} onClick={() => handleSelectAnswer(questionIndex, option)}>
+                                                    <label className="radio-container">
+                                                        <input type="radio" name={`q${questionIndex}`} value={option} checked={answers[questionIndex] === option} />
+                                                        <span>{option}. {q[`option${option}` as keyof typeof q]}</span>
+                                                    </label>
+                                                </li>
+                                            ))}
                                     </ul>
                                 </div>
                             );
